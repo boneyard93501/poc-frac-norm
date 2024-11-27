@@ -10,13 +10,9 @@ While the CU-based approach simplifies resource and reward management, it introd
 
 While fractionalizing CUs in some manner allows Fluence to near-optimally address and capture customer demand, the current rewards program does not properly incentivize providers to release reward-bound CUs when the demand for fractional CUs does not generate revenue at least equal to the reward generation. For example, if only one vCPU, out of four, is rented a CU removed from reward production is only utilized at 25% and it stands to reason that the revenue falls short of the CU's reward. Yet, for the provider to switch a CU from reward mining to serving customer demand, the revenue generated from customer demand for the fractional CU must be greater than the foregone mining reward.
 
-From a customer perspective, each capacity unit rented should perform the same, cetris paribus, across the network. That is, a vCPU of some type, say "large", with 1 GB RAM should perform approximately the same regardless of the providing data center. Since the network is comprised of potentially heterogenous servers across heterogenous data centers, some normalization relative to the hashrate of a CU and, by extension, fractionalized CU, e.g., vCPU, needs to happen.
+From a customer perspective, each capacity unit rented should perform the same, ceteris paribus, across the network. That is, a vCPU of some type, say "large", with 1 GB RAM should perform approximately the same regardless of the providing data center. Since the network is comprised of potentially heterogenous servers across heterogenous data centers, some normalization relative to the hashrate of a CU and, by extension, fractionalized CU, e.g., vCPU, needs to happen.
 
-We propose a normalization and reward program adjustment to cover both provider and customer concerns. Specifically, we propose to:
-
-* reward underutilized CU fractions so that the revenue + reward at most equal to total reward. so when the utilization, via fractionalized.. increase, the reward payout decreases and eventually hits zero. ... doing this without PoW.
-* normalize over hashrates
-
+We propose a normalization and reward program adjustment to cover both provider and customer concerns. Specifically, we propose to reward underutilized CUs due to fraction(s) rented by customers not generating revenue equivalent to the foregone PoW reward. Moreover, we propose two normalization models utilizing PoW hashrates allowing customers to experience consistent performance of a rented resource unit across the network.
 
 ## PoC Model Extension
 
@@ -53,7 +49,6 @@ If the target hash rate $h$ exceeds the capacity of a single CU on the same serv
 Assume a target hash rate for a vCPU of $h = 25$. For server $S_1$, the CU hash rates are $h_{1,1} = 8$, $h_{2,1} = 12$, and $h_{3,1} = 15$. To satisfy $h = 25$, the smallest set of CUs from $S_1$ is $\mathcal{C}_1 = \{C_{1,1}, C_{2,1}, C_{3,1}\}$. The first two CUs provide $h_{1,1} + h_{2,1} = 8 + 12 = 20$. The remaining hash rate, $25 - 20 = 5$, is provided by a fraction of $C_{3,1}$, with fractional utilization $c_{3} = \frac{5}{15} = 0.333$.
 
 A classification model over hashrates, such as Dynamic Equal Bin Widths, simplifies normalization by grouping CUs into bins based on their hashrate capabilities. For example, CUs can be classified into $\textbf{small} (h_{i,j} \leq 0.5 \cdot h_{max})$, $\textbf{medium} (0.5 \cdot h_{max} < h_{i,j} \leq 0.8 \cdot h_{max})$ and $\textbf{large} (h_{i,j} > 0.8 \cdot h_{max})$ performance bins. Each bin is assigned a target normalized hashrate, $h_t$, as a representative value, e.g., $0.4 \cdot h_{max}$ for small, $0.65 \cdot h_{max}$ for medium, and $0.9 \cdot h_{max}$ for large, enabling consistent and predictable resource allocation. This approach reduces complexity by treating performance ranges within a bin as equivalent.
-
 
 ## Summary
 
