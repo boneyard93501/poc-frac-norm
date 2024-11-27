@@ -10,49 +10,49 @@ While the CU-based approach simplifies resource and reward management, it introd
 
 While fractionalizing CUs in some manner allows Fluence to near-optimally address and capture customer demand, the current rewards program does not properly incentivize providers to release reward-bound CUs when the demand for fractional CUs does not generate revenue at least equal to the reward generation. For example, if only one vCPU, out of four, is rented a CU removed from reward production is only utilized at 25% and it stands to reason that the revenue falls short of the CU's reward. Yet, for the provider to switch a CU from reward mining to serving customer demand, the revenue generated from customer demand for the fractional CU must be greater than the foregone mining reward.
 
+From a customer perspective, each capacity unit rented should perform the same, cetris paribus, across the network. That is, a vCPU of some type, say "large", with 1 GB RAM should perform approximately the same regardless of the providing data center. Since the network is comprised of potentially heterogenous servers across heterogenous data centers, some normalization relative to the hashrate of a CU and, by extension, fractionalized CU, e.g., vCPU, needs to happen.
+
+We propose a normalization and reward program adjustment to cover both provider and customer concerns. Specifically, we propose to:
+
+* reward underutilized CU fractions so that the revenue + reward at most equal to total reward. so when the utilization, via fractionalized.. increase, the reward payout decreases and eventually hits zero. ... doing this without PoW.
+* normalize over hashrates
 
 
-## Model Extension
+## PoC Model Extension
+
+In a decentralized network of heterogeneous hardware, it is critical to normalize performance across compute resources to enable accurate, trustless provisioning. A Proof-of-Work (PoW) system facilitates the observation of hash rates at the (physical) core level, providing a measurable proxy for performance. By using hash rate metrics, we can normalize performance both within individual servers and across the network, enabling reliable resource packaging and provisioning regardless of fractionalization.
+
+### Provider Incentivization For Selling Fractional CUs
+
+A compute unit (CU), $C$, generates a reward $R_{PoW}$ when running PoW xor revenue $R_{rent}$ when rented to a customer per epoch $T$. If $C$ is fractionalized into $n$ virtual CPUs (vCPUs), each vCPU has a capacity $c_i = \frac{C}{n}$, and the revenue from renting a single vCPU is $r_i$, where $r_i < R_{PoW}$.
+
+To switch $C$ from PoW to fractional renting, the total revenue from renting out vCPUs is denoted as: $R_{\text{total\_rent}} = \sum_{i \in \mathcal{R}} r_i$.
+
+where $\mathcal{R} \subseteq \{1, 2, \dots, n\}$ represents the set of rented vCPUs. This total revenue may be less than $R_{PoW}$, as it depends on the number of vCPUs rented out. Consequently, a provider may be hesitant to allocate $C$ from generating PoW rewards to renting CU fractions potentially leading to loss of (immediate) income.
+
+In order to incentivize providers to allocate compute units (CUs) to serve fractional (CU) customer demand, we propose allocating proportional rewards, $R_{\text{frac}}$, to the CU when it is not running Proof-of-Work (PoW). The total reward for the CU is the sum of the proportional rewards, $R_{\text{frac}}$, and the revenue from renting virtual CPUs (vCPUs), $R_{\text{total\_rent}} = \sum_{i \in \mathcal{R}} r_i$, where $\mathcal{R}$ represents the set of rented vCPUs. To ensure the CU is properly compensated while not exceeding the PoW reward, the proportional reward is defined as: $R_{\text{frac}} = \max\left(0, R_{\text{PoW}} - R_{\text{total\_rent}}\right)$.
+
+When the CU is fully utilized ($R_{total\_rent} = R_{PoW}$), the proportional reward becomes $R_{frac} = 0$ and the provider earns revenue solely from renting vCPUs. For underutilized CUs, where $R_{total\_rent} < R_{PoW}$, the proportional reward compensates for the revenue gap, ensuring that: $R_{frac} + R_{total\_rent} \leq R_{PoW}$. Of course, this calculation needs to be repeated every epoch $t_i$ for the subset of deals that rent fractions of a (specific) CU.
+
+By way of an example, we may assume a CU has a PoW reward of $R_{PoW} = \$10$, is divided into $n = 4$ vCPUs and each rented vCPU generates $r_i = \$3.00$ per period. When fully utilized, the set of rented vCPUs is $\mathcal{R} = \{c_1, c_2, c_3, c_4\}$, and the total revenue from renting is $R_{\text{total\_rent}} = \sum_{i \in \mathcal{R}} r_i = 4 \cdot \$3.00 = \$12.00$. Since $R_{total\_rent} > R_{PoW}$, the proportional reward is $R_{frac} = \max(0, R_{PoW} - R_{total\_rent} = \max(0, \$10 - \$12.00) = \$0$.
+
+If, on th eother hand, only two vCPUs are rented, the set of rented vCPUs is $\mathcal{R} = \{c_1, c_2\}$, and the total revenue from renting is $R_{total\_rent} = \sum_{i \in \mathcal{R}} r_i = 2 \cdot \$3.00 = \$6.00$. The proportional reward compensates for the shortfall, calculated as $R_{frac} = \max(0, R_{PoW} - R_{total\_rent}) = \max(0, \$10 - \$6.00) = \$4.00$. In this case, the total reward for the CU is $R_{total} = R_{total\_rent} + R_{frac} = \$6.00 + \$4.00 = \$10.00$.
+
+### Performance Normalization By Hashrate Proxy
+
+Our network consists of a set of servers, each with some number of cores and RAM mapped to CUs that perform Proof-of-Work (PoW) computations. Each CU contributes a hashrate, say, $h_{i,j}$, which should be fairly consistent for CUs within a server but may significantly differ across servers due to server type variations.
+
+We want to rent capacity to customers such that the performance of a compute resource, e.g., a vCPU, is consistent regardless of which server or core it comes from. The performance of a vCPU is defined by a target hash rate $h$, which may not be directly advertised to the customer. Regardless, our objective is to allocate CUs, or fractions thereof, across servers to provide consistent performance that matches the (underlying) $h$ of the advertised capacity. To achieve this goal of provisioning consistent compute resources, e.g., vCPUs, against some target hash rate $h$, we need to consider performance normalization and, possibly, classification.
+
+The compute resources in our decentralized network are described as follows. Let $S = \{1,2,\dots,n\}$ be the set of (heterogeneous) servers. For each server $S_j$, let $C_{i,j}$ represent the $i$-th CU, and let $n_j$ be the total number of CUs in $S_j$. Each CU $C_{i,j}$ produces a hash rate $h_{i,j}$ for some epoch $T$, and the total hash rate of server $S_j$ is $H_j = \sum_{i=1}^{n_j} h_{i,j}$.
+
+Fractionalizing a CU into one or more vCPUs is defined as a fraction $c_i$ of a CU's total capacity. If the target hash rate $h$ is less than the capacity of a single CU, the fractionalization is represented as $c_i = \frac{h}{h_{i,j}}$.
+
+If the target hash rate $h$ exceeds the capacity of a single CU on the same server, multiple CUs are combined. Let $\mathcal{C}_j \subseteq \{C_{1,j}, \dots, C_{n_j,j}\}$ denote the set of CUs used to satisfy $h$, where $\mathcal{C}_j$ contains the smallest number of CUs such that $\sum_{C_{i,j} \in \mathcal{C}_j} h_{i,j} \geq h$. For the final CU in $\mathcal{C}_j$, only a fraction of its capacity may be required. If $C_{k,j}$ is the last CU in $\mathcal{C}_j$, its fractional utilization is $c_k = \frac{h - \sum_{C_{i,j} \in \mathcal{C}_j \setminus \{C_{k,j}\}} h_{i,j}}{h_{k,j}}$.
+
+Assume a target hash rate for a vCPU of $h = 25$. For server $S_1$, the CU hash rates are $h_{1,1} = 8$, $h_{2,1} = 12$, and $h_{3,1} = 15$. To satisfy $h = 25$, the smallest set of CUs from $S_1$ is $\mathcal{C}_1 = \{C_{1,1}, C_{2,1}, C_{3,1}\}$. The first two CUs provide $h_{1,1} + h_{2,1} = 8 + 12 = 20$. The remaining hash rate, $25 - 20 = 5$, is provided by a fraction of $C_{3,1}$, with fractional utilization $c_{3} = \frac{5}{15} = 0.333$.
+
+While cross_CU fractionalization is certainly possible, we expect vCPUs to be specified within the performance capabilities of a single CU. This can be further ...
 
 
-
-
-
-## Normalizing Compute Resources
-
-In a decentralized network of heterogenous hardware, it is critical to normalize hardware to allow the accurate, trustless provisioning of compute resources. Since the proof system allows for the observation of hash rates on per compute unit, i.e., core, level. Once we normalize performance, via the hashrate proxies, we can use the weights to drive resource fractionalization.
-
-To wit, we have a set of servers, each with a number of cores that perform Proof-of-Work (PoW) computations. Each core contributes a hash rate, and the sum of these contributions defines the server's hash rate. We want to rent vCPUs to customers such that the performance of a vCPU is the same regardless of which server or core it comes from. The performance of a vCPU is defined by a target hash rate $h$, which may not be directly advertised to the customer. Instead, a class system may be used. Regardless, our objective is to allocate fractions of cores (or whole cores) across servers to provide consistent vCPU performance matching $h$.
-
-Our distributed network can be described as:
-
-* $S= \{1,2,…,n\}$: the set of (heterogenous) servers
-* $Ci,j$: the i-th core of server $S_j$
-* $n_j$: the total number of cores in server $S_j$, for $j\in S$
-* $h_i,j$: the hash rate produced by $C_i,j$ for some epoch $T$.
-* $H_{j} = \sum_{i=1}^{n_{j}} h_{i,j}$: the total hashrate of server $S_j$
-
-and the vCPU is defined as a fraction, $f_i$, of a server $S_J$'s total resources (cores), such that:
-
-* $f_j \times H_j = h$ where $f_j \in [0,1]$
-
-Our objective, then is to:
-
-* Fractionalize the server for a given $h$ such that
-$f_j = {h \over H_j}$
-* Attain hash rate consistency for the vCPU such that
-$f_j \times H_j = h$, where $0 \leq f_j \leq 1$
-
-And that's it.
-
-Example:
-
-* target hash rate for a vCPU: $h = 10$
-* $S_1$: $h_{1,1} = 8, h_{2,1} = 12, h_{3,1} = 15$
-* $S_2$: $h_{1,2} = 10, h_{2,2} = 20$
-
-$H_{1} = h_{1,1} + h_{2,1} + h_{3,1} = 8 + 12 + 15 = 35$
-$H_{2} = h_{1,2} + h_{2,2} = 10 + 20 = 30$
-
-$f_{1} = \frac{H_{1}}{h} = \frac{35}{10} \approx 0.286, \quad f_{2} = \frac{H_{2}}{h} = \frac{30}{10} \approx 0.333$
-
+## Implementation Considerations
