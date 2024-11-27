@@ -52,7 +52,11 @@ If the target hash rate $h$ exceeds the capacity of a single CU on the same serv
 
 Assume a target hash rate for a vCPU of $h = 25$. For server $S_1$, the CU hash rates are $h_{1,1} = 8$, $h_{2,1} = 12$, and $h_{3,1} = 15$. To satisfy $h = 25$, the smallest set of CUs from $S_1$ is $\mathcal{C}_1 = \{C_{1,1}, C_{2,1}, C_{3,1}\}$. The first two CUs provide $h_{1,1} + h_{2,1} = 8 + 12 = 20$. The remaining hash rate, $25 - 20 = 5$, is provided by a fraction of $C_{3,1}$, with fractional utilization $c_{3} = \frac{5}{15} = 0.333$.
 
-While cross_CU fractionalization is certainly possible, we expect vCPUs to be specified within the performance capabilities of a single CU. This can be further ...
+A classification model over hashrates, such as Dynamic Equal Bin Widths, simplifies normalization by grouping CUs into bins based on their hashrate capabilities. For example, CUs can be classified into $\textbf{small} (h_{i,j} \leq 0.5 \cdot h_{max})$, $\textbf{medium} (0.5 \cdot h_{max} < h_{i,j} \leq 0.8 \cdot h_{max})$ and $\textbf{large} (h_{i,j} > 0.8 \cdot h_{max})$ performance bins. Each bin is assigned a target normalized hashrate, $h_t$, as a representative value, e.g., $0.4 \cdot h_{max}$ for small, $0.65 \cdot h_{max}$ for medium, and $0.9 \cdot h_{max}$ for large, enabling consistent and predictable resource allocation. This approach reduces complexity by treating performance ranges within a bin as equivalent.
 
 
-## Implementation Considerations
+## Summary
+
+We provide solution candidates that handle both CU fractionalization and performance normalization with the goal to service both customer and provider expectation and requirements. The proposed models allow Fluence to offer a wide variety of "sized" vCPUs independently of the underlying CU metric, while incentivizing providers to release CUs from PoW even if the expected vCPU revenue is less than the foregone PoW reward.
+
+With respect to normalization, multiple options exist to provide some sort of consistency with respect to vCPU, or CU< performance across the network. In the end, we expect customers will decide how much performance variance is acceptable, which in turn shapes the normalization model.
